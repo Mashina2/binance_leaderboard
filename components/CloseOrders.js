@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useRouter } from 'next/router'
 
 export default function CloseOrders() {
     let [getOrders, setOrders] = useState();
+const router = useRouter();
     useEffect(() => {
         (async () => {
             let orders = await fetch("/api/mongo/get_orders");
@@ -26,8 +28,14 @@ export default function CloseOrders() {
                         <td>{order.roe} </td>
                         {/* <td>{order.openDateTime}</td>
                         <td>{order.closeDateTime}</td> */}
+                        <td id={order._id}><a  className="btn btn-sm btn-success" onClick={ViewDetails} value="view" ><i className="fas fa-eye"></i></a></td>
+
                     </tr>
                 )
+		function ViewDetails(e) {
+                    e.preventDefault();
+                    router.push(`/close_order_details?order_id=${order._id}`);
+                  }
             }
         }
             setOrders(arr);
@@ -52,6 +60,7 @@ export default function CloseOrders() {
                 <th>ROE(%)</th>
                 {/* <th>Start Time</th>
                 <th>End Time</th> */}
+		<th>Action</th>
                 </tr>
             </thead>
             <tbody>{getOrders}</tbody>

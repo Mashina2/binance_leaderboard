@@ -21,7 +21,7 @@ export default function OpenOrders() {
             let arr = [];
             for (let i in orders) {
                 let order = orders[i];
-            // if(order.status == 0){
+            if(order.status == 0){
                 arr.push(
                     <tr 
                     className="w3-animate-bottom"
@@ -36,10 +36,10 @@ export default function OpenOrders() {
                         <td>{order.roe} </td>
                         {/* <td>{order.openDateTime}</td>
                         <td>{order.closeDateTime}</td> */}
-                        <td id={order._id}><a href={OrderDetails} className="btn btn-sm btn-success" onClick={ViewDetails} value="view" ><i className="fas fa-eye"></i></a></td>
+                        <td id={order._id}><a  className="btn btn-sm btn-success" onClick={ViewDetails} value="view" ><i className="fas fa-eye"></i></a></td>
                     </tr>
                 )
-            // }
+             }
 
 
 
@@ -51,12 +51,13 @@ export default function OpenOrders() {
 
 
             setOrders(arr);
-        })();
+       })();
+    
     });
 
     return (
         <div className="container">
-            <h1 className="text-center">Orders</h1>
+            <h1 className="text-center">Open Orders</h1>
             <div className="table-responsive">
             <table
             className="table"

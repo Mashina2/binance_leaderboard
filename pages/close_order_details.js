@@ -35,7 +35,7 @@ export default function OrderDetails(props) {
                         <td>{order.isCredit==1?'Credit':"Debit"} </td>
                         <td>{order.status==1?'Close Order':"Open Order"} </td>
                         <td>{order.openDateTime}</td>
-                        <td>{order.closeDateTime}</td> 
+                        <td>{order.status == 1 ? order.closeDateTime:""}</td> 
                     </tr>
                 )
             // }
@@ -68,8 +68,8 @@ export default function OrderDetails(props) {
                 <th>ROE(%)</th>
                 <th>Transaction Type</th>
                 <th>Order Status</th>
-                <th>Order Time</th>
-                <th>Our System Time</th> 
+                <th>Listener Time</th>
+                <th>System Time</th> 
                 </tr>
             </thead>
             <tbody>{getOrders}</tbody>

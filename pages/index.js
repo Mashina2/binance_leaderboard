@@ -7,6 +7,8 @@ import { getServerSideCookie } from "../helpers/cookieHandler";
 
 import Parent from "../components/Parent";
 
+console.log('sdfdsfdsfdsfdsfsfsfdsffsdfdsfsdfsdfdsfsdfdsf');
+
 export default function Home() {
   
   return (
@@ -18,3 +20,5 @@ export default function Home() {
   </div>
   )
 }
+
+

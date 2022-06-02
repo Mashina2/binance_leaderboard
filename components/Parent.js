@@ -9,6 +9,8 @@ import Listeners from "./Listeners";
 import OpenOrders from "./OpenOrders";
 import CloseOrders from "./CloseOrders";
 import OrderDetails from "./OrderDetails";
+import BinaceApi from "./BinanceApi";
+import BinanceOpenOrders from "./BinanceOpenOrder";
 
 // Component Import Stop
 
@@ -20,7 +22,8 @@ export default function Parent(props) {
     Listeners:Listeners,
     OpenOrders:OpenOrders,
     CloseOrders:CloseOrders,
-    OrderDetails:OrderDetails
+    OrderDetails:OrderDetails,
+    BinaceApi:BinaceApi
   };
   let DefaultApp = appWrapper[getCookie("DefaultApp")] || (
     <Index  />
@@ -60,6 +63,21 @@ export default function Parent(props) {
       />
     );
   }
+  function BinanceApiButton(e) {
+    e.preventDefault();
+    setApp(
+      <BinaceApi
+      />
+    );
+  }
+  function BinanceOpenOrdersButton(e) {
+    e.preventDefault();
+    setApp(
+      <BinanceOpenOrders
+      />
+    );
+  }
+ 
 
   // console.log(DefaultApp);
   return (
@@ -68,7 +86,9 @@ export default function Parent(props) {
       <input type="button" value="Listeners" onClick={ListenersButton} />
       <input type="button" value="OpenOrders" onClick={OpenOrdersButton} />
       
-      {/* <input type="button" value="CloseOrders" onClick={CloseOrdersButton} /> */}
+      <input type="button" value="CloseOrders" onClick={CloseOrdersButton} />
+      <input type="button" value="BinaceAPI" onClick={BinanceApiButton} />
+      <input type="button" value="BinanceOpenOrders" onClick={BinanceOpenOrdersButton} />
       <div className="app_parent">{app}</div>
       <br />
     </div>
