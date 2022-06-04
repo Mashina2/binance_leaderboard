@@ -1,14 +1,21 @@
 var Binance2 = require('binance-api-node').default;
+const TelegramBot = require("node-telegram-bot-api");
+const master_token = "5096471511:AAHyjFk4NpXrm66XIZDQ67JaKlTuCi3SjLA";
+const TELEGRAM_MASTER_CHANNEL = "-1001789460971";
 const pnlManager = require('binance-leaderboard-listener/libs/pnlManager');
-const ObjectId = require("mongodb");
+const ObjectId = require("mongodb").ObjectId;
 const MongoClient = require('mongodb').MongoClient;
 const date = require('date-and-time');
+const { responseSymbol } = require('next/dist/server/web/spec-compliant/fetch-event');
+// const {sendTelegramMaster} = require('./helpers/telegram_helper');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  swcMinify:false,
+    reactStrictMode: true,
+    swcMinify: false,
 }
 console.log('ccccccccccccccccccccccccccccccccccccccccc');
+
+
 
 
 // var url = "mongodb://localhost:27017";
@@ -22,6 +29,16 @@ const DELAY = 5000;
 
 const now = new Date();
 var currentDatetime = date.format(now, 'YYYY-MM-DD HH:mm:ss');
+// sendTelegramMaster(
+//     `test message from http://139.99.74.143:3000`
+// );
+
+async function sendTelegramMaster(message) {
+    const bot = new TelegramBot(master_token, { polling: false });
+
+    // bot.sendMessage(process.env.TELEGRAM_MASTER_CHANNEL, message);
+    bot.sendMessage(TELEGRAM_MASTER_CHANNEL, message);
+}
 
 function datetime(t) {
     // var dt = new Date(t*1000);
@@ -84,8 +101,8 @@ let decimalCount = num => {
                 str = str[1].split('1');
                 valstr = str[0];
                 console.log("valstrlength" + valstr.length);
-                // valstr = parseInt((valstr.length+1));
-                valstr = parseInt((valstr.length));
+                valstr = parseInt((valstr.length + 1));
+                // valstr = parseInt((valstr.length));
             } else {
                 console.log("else");
                 valstr = 0;
@@ -97,6 +114,25 @@ let decimalCount = num => {
         return valstr;
     };
     return 0;
+}
+
+
+async function getOrders() {
+
+    let orders_count = await fetch("http://139.99.74.143:3000/api/mongo/get_orders");
+    //  let orders_count = await fetch("http://localhost:3000/api/mongo/get_orders");
+    orders_count = await orders_count.json();
+
+    let listeners = await fetch("http://139.99.74.143:3000/api/mongo/get_listeners");
+    //  let listeners = await fetch("http://localhost:3000/api/mongo/get_listeners");
+    listeners = await listeners.json();
+    listeners = listeners.data;
+
+    let exchangeInfo = await fetch("https://api.binance.com/api/v3/exchangeInfo");
+    exchangeInfo = await exchangeInfo.json();
+
+    return orders_count;
+
 }
 
 
@@ -145,7 +181,6 @@ async function closeTrade(symbol) {
         useServerTime: true,
     });
 
-    let ticker = await client.prices();
 
     let exchangeInfo = await fetch("https://fapi.binance.com/fapi/v1/exchangeInfo");
     exchangeInfo = await exchangeInfo.json();
@@ -179,8 +214,8 @@ async function closeTrade(symbol) {
                             quantity: quantity,
                             side: side,
                             type: "MARKET",
-                            reduceOnly: true,
-                            closePosition: true
+                            // reduceOnly: true,
+                            // closePosition: true
                         });
 
                         console.log("order" + order);
@@ -209,8 +244,8 @@ async function closeTrade(symbol) {
                             quantity: quantity,
                             side: side,
                             type: "MARKET",
-                            reduceOnly: true,
-                            closePosition: true
+                            // reduceOnly: true,
+                            // closePosition: true
                         });
                         console.log("order" + order);
                         if (order.msg) {
@@ -305,67 +340,68 @@ async function futureTrade(data) {
 
 
 
- (async () => {
+(async () => {
 
-   //connect with binance api
+    //connect with binance api
 
-  //  let apis = await fetch("http://localhost:3000/api/mongo/get-binance-api");
-   let apis = await fetch("http://139.99.74.143:3000/api/mongo/get-binance-api");
-   apis = await apis.json();
-   let apikey = apis.apikey;
-   let apisecret = apis.apisecret;
+    //  let apis = await fetch("http://localhost:3000/api/mongo/get-binance-api");
+    let apis = await fetch("http://139.99.74.143:3000/api/mongo/get-binance-api");
+    apis = await apis.json();
+    let apikey = apis.apikey;
+    let apisecret = apis.apisecret;
 
-   let leverage = apis.leverage;
-
-
-   let clients = Binance2({
-       apiKey: apikey,
-       apiSecret: apisecret,
-       useServerTime: true,
-   });
+    let leverage = apis.leverage;
 
 
-
-   let orders_count = await fetch("http://139.99.74.143:3000/api/mongo/get_orders");
-  //  let orders_count = await fetch("http://localhost:3000/api/mongo/get_orders");
-   orders_count = await orders_count.json();
-
-   let listeners = await fetch("http://139.99.74.143:3000/api/mongo/get_listeners");
-  //  let listeners = await fetch("http://localhost:3000/api/mongo/get_listeners");
-   listeners = await listeners.json();
-   listeners = listeners.data;
-
-   let exchangeInfo = await fetch("https://api.binance.com/api/v3/exchangeInfo");
-   exchangeInfo = await exchangeInfo.json();
-
-   let ticker = await clients.prices();
-
-   // console.log("exchangeInfo "+JSON.stringify(exchangeInfo));
-   let symbol;
+    let clients = Binance2({
+        apiKey: apikey,
+        apiSecret: apisecret,
+        useServerTime: true,
+    });
 
 
 
-   let listener_id;
-   for (let i in listeners) {
-       let list = listeners[i];
-       if (list.isPrimary == true) {
-           listener_id = list.encryptedUid;
-       }
-   }
+    let orders_count = await fetch("http://139.99.74.143:3000/api/mongo/get_orders");
+    //  let orders_count = await fetch("http://localhost:3000/api/mongo/get_orders");
+    orders_count = await orders_count.json();
+
+    let listeners = await fetch("http://139.99.74.143:3000/api/mongo/get_listeners");
+    //  let listeners = await fetch("http://localhost:3000/api/mongo/get_listeners");
+    listeners = await listeners.json();
+    listeners = listeners.data;
+
+    let exchangeInfo = await fetch("https://api.binance.com/api/v3/exchangeInfo");
+    exchangeInfo = await exchangeInfo.json();
 
 
-   await client.connect();
-//    const database = client.db("binance_leaderboard");
-   const database = client.db("GRIFFIN");
-   const Orders = database.collection("orders");
-   const Orders_Details = database.collection("order_details");
-   const lists = database.collection("leaderboard_uid");
+    // console.log("exchangeInfo "+JSON.stringify(exchangeInfo));
+    let symbol;
 
-   //disable trade on restart server;
+    let listener_id;
+    let listener_name;
+    for (let i in listeners) {
+        let list = listeners[i];
+        if (list.isPrimary == true) {
+            listener_id = list.encryptedUid;
+            listener_name = list.Name;
+        }
+    }
 
-   let query =  { isPrimary: true }; 
-   let status = { $set: {enable : false } }
-    lists.updateOne(query,status,{ upsert: true });
+  
+
+
+    await client.connect();
+    //    const database = client.db("binance_leaderboard");
+    const database = client.db("GRIFFIN");
+    const Orders = database.collection("orders");
+    const Orders_Details = database.collection("order_details");
+    const lists = database.collection("leaderboard_uid");
+
+    //disable trade on restart server;
+
+    let query = { isPrimary: true };
+    let status = { $set: { enable: false } }
+    lists.updateOne(query, status, { upsert: true });
 
 
     const listener = pnlManager.listen({
@@ -375,517 +411,338 @@ async function futureTrade(data) {
     });
 
     listener.on('update', (data) => {
+        // getOrders().then(response => {
+        //     let listeners = response.listeners;
+        //     let orders_count = response.orders_count;
+        //     let exchangeInfo = response.exchangeInfo;
 
-        lists.find({}).toArray(function(err, result){
-            let traderStatus = result[0].enable;
-            console.log("tradeeeeeeeeeeeeeeeeeeedddeeeeee status "+traderStatus);
-            if(traderStatus == true){
-                    console.log("condition true");
-         
-        let type = "Buy";
-        let total_orders = orders_count.length;
-        let orders = orders_count.data;
-        let status = 0;
-        // console.log("total_orders "+total_orders);
-        let lblength = data.length;
-        // console.log("total orders" + total_orders);
-        // console.log("lblength" + lblength);
-        let lengthloop = lblength;
-
-
+        //     console.log("listenersssssssssss " + JSON.stringify(listeners));
+        //     console.log("orders counttttttttttttt" + JSON.stringify(orders_count));
+        //     console.log("exchange infooooooooooooooooo" + JSON.stringify(exchangeInfo));
+        // });
         let lbsymbols = [];
 
+        lists.find({}).toArray(function (err, result) {
 
-        for (let i = 0; i < lblength; i++) {
+            let traderStatus = result[0].enable;
+            if (traderStatus == true) {
+                
+                // return false;
+                    let type = "Buy";
+                    // let total_orders = orders_count.length;
+                    // let orders = orders_count.data;
+                    let status = 0;
+                    let lblength = data.length;
+                    let lengthloop = lblength;
 
-            //new encrypted id data insert
+                    for (let i = 0; i < lblength; i++) {
+                        //new encrypted id data insert
+                        lbsymbols.push(data[i].symbol);
 
+                        let lbsymbol = data[i].symbol;
 
+                        // let mgorders = orders_count.data;
 
-            lbsymbols.push(data[i].symbol);
-            let lbsymbol = data[i].symbol;
-            let mgorders = orders_count.data;
-            let uid = orders_count.uid;
-
-
-            let mgsymbol = mgorders[lbsymbol];
-            let mguid = uid[listener_id];
-
-
-            // let quantity = 35;
-            let quantity = 10;
-
-            let final_quantity = quantity / data[i].markPrice;
-            final_quantity = final_quantity;
-
-            let stepsize;
-            for (let j in exchangeInfo.symbols) {
-                let symbols = exchangeInfo.symbols[j];
-                if (symbols.symbol == lbsymbol) {
-                    stepsize = symbols.filters[2].stepSize;
-                }
-            }
-            console.log("stepsize" + stepsize);
-            let quan = decimalCount(stepsize);
-            final_quantity = splitData(final_quantity, quan);
-            console.log("lbsymbol" + lbsymbol);
-            console.log("price" + ticker[lbsymbol]);
-            console.log("final_quantity " + final_quantity);
-            //    let response =  await client.marketBuy(side,lbsymbol,quantity).catch((e) => {
-            //             console.log("Error on order Buy");
-            //             });
+                        // let uid = orders_count.uid;
 
 
-            //For open order new code
-            if (data.length > 0) {
+                        // let mgsymbol = mgorders[lbsymbol];
+                        // let mguid = uid[listener_id];
 
-                console.log("new code workking");
-                let alldata = {};
-                alldata.symbol = data[i].symbol;
-                // alldata.quantity = 35;
-                alldata.quantity = 10;
+                        // convert leaderboard amount to usdt with entry price
 
-                quantity = final_quantity;
-                alldata.quantity = final_quantity;
-                let type = "Buy";
-                alldata.type = "Buy";
-                if (data[i].amount < 0) {
-                    type = "Sell";
-                    alldata.type = "Sell";
-                }
-                // if(type == "Buy"){
-                // }
+                        let lbamt = data[i].amount;
+                        let lbentryprice = data[i].entryPrice;
 
-                // //open order code
-                // Orders.find({ symbol: lbsymbol }).toArray(function (req, res) {
-                Orders.find({ $and: [{ symbol: lbsymbol }, { encryptedUid: listener_id },{ status: 0 }] }).toArray(function (req, res) {
-                    if (res.length > 0) {
-                        // size check for update order new code rr
 
-                    } else {
-                        // Open order new code rr
+                        let lbamount = lbamt * lbentryprice;
 
-                        setLeverage(lbsymbol, leverage).then(res => {
-                        console.log("all_data " + JSON.stringify(alldata));
-                        futureTrade(alldata).then(response => {
-                            //if trade succssfully placed then insert in mongo db
 
-                            if (response.symbol = data[i].symbol) {
-                                var orderData = [{ encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: quantity, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1,orderStatus:"success" }];
-                                Orders.insertMany(orderData, function (err, res) {
-                                    if (err) throw err;
+                        // let quantity = 35;
+                        let quantity = 10;
 
-                                    // var Review = { encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1,review:" insert record open order with new symbol and new encrypted id in orders table" };
-                                    // Reviews.insertOne(Review,function(err,res){});
-                                    // console.log("orders  created");
-                                    var id = res.insertedIds[0];
-                                    var orderDetails = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: quantity, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1,orderStatus:"success" };
-                                    Orders_Details.insertOne(orderDetails, function (err, res) {
+                        let final_quan = quantity / data[i].markPrice;
+
+                        let stepsize;
+                        for (let j in exchangeInfo.symbols) {
+                            let symbols = exchangeInfo.symbols[j];
+                            if (symbols.symbol == lbsymbol) {
+                                stepsize = symbols.filters[2].stepSize;
+                            }
+                        }
+
+                        let quan = decimalCount(stepsize);
+
+                        let lbquan = decimalCount(stepsize);
+
+                        let final_quantity = splitData(final_quan, quan);
+
+                        let final_lbamount = splitData(lbamount, lbquan);
+
+
+                        console.log("final_lbamount" + final_lbamount);
+
+
+                        if (data[i].amount < 0) {
+                            final_quantity = -final_quantity;
+                            // final_lbamount = -final_lbamount;
+                        }
+
+                        //For open order new code 
+                        if (data.length > 0) {
+
+                            console.log("new code workking");
+                            let alldata = {};
+                            alldata.symbol = data[i].symbol;
+                            // alldata.quantity = 35;
+                            alldata.quantity = 10;
+
+                            quantity = final_quantity;
+                            alldata.quantity = final_quantity;
+                            let type = "Buy";
+                            alldata.type = "Buy";
+                            if (data[i].amount < 0) {
+                                type = "Sell";
+                                alldata.type = "Sell";
+                            }
+
+                            Orders.find({ $and: [{ symbol: lbsymbol }, { encryptedUid: listener_id }, { status: 0 }] }).toArray(function (req, res) {
+                                // //open order code
+
+                                // data is already exist in mongodb with open order than size match with leaderboard and mongodb
+                                if (res.length > 0) {
+                                    // size check for update order new code rr
+
+                                    let lbsize = data[i].amount;
+                                    let mgsize = res[0].lbsize;
+                                    console.log("***********************************************");
+                                    console.log(mgsize);
+
+                                    let mgsym = lbsymbol;
+                                    
+                                    let order_id = res[0]._id;
+
+                                    //if leaderboard size less than 0 than set type sell otherwise buy
+                                    if (lbsize < 0) {
+                                        type = "Sell";
+                                    }
+                                    else {
+                                        type = "Buy";
+                                    }
+
+                                    // leaderboard size is greater than mongodb size and type Buy
+
+                                    if (lbsize > mgsize && type == "Buy") {
+                                        let size = final_quantity;
+                                        // futureTrade(alldata).then(response => {
+
+                                        var updateData = { symbol: mgsym };
+                                        // var updateData = { _id: ObjectId(order_id) };
+                                        var newValue = { $set: { amount: size, status: 0, isCredit: 1, orderStatus: "success", lbamount: final_lbamount, lbentryPrice: data[i].entryPrice, lbsize: lbsize } };
+
+                                        Orders.updateMany(updateData, newValue, function (err, res) {
+
+                                            Orders_Details.find({ orderId: ObjectId(order_id) }).toArray(function (req, res) {
+                                                var orderDetails = { orderId: res[0].orderId, symbol: res[0].symbol, closePrice: res[0].closePrice, price: res[0].price, pnl: res[0].pnl, roe: res[0].roe, amount: size, updateTimeStamp: res[0].updateTimeStamp, openDateTime: datetime(res[0].updateTimeStamp), closeDateTime: currentDatetime, status: 0, type: type, isCredit: 1, orderStatus: "success", lbamount: final_lbamount, lbentryPrice: data[i].entryPrice, lbsize: lbsize };
+
+                                                Orders_Details.insertOne(orderDetails, function (err, res) {
+                                                });
+                                            });
+
+                                        });
+
+                                        // sendTelegramMaster(
+                                        //     `New order made: ${type} ${size} of ${res[0].symbol} for ${listener_name}`
+                                        // );
+                                        // console.log("order placed size increase of previous order" + JSON.stringify(response));
+                                        // }).catch(err => {
+                                        //     var updateData = { symbol: mgsym };
+                                        //     var newValue = { $set: { amount: lbsize, status: 0, isCredit: 1, orderStatus: "failed" } };
+                                        //     Orders.updateMany(updateData, newValue, function (err, res) {
+
+                                        //         Orders_Details.find({ orderId: ObjectId(order_id) }).toArray(function (req, res) {
+                                        //             var orderDetails = { orderId: res[0].orderId, symbol: res[0].symbol, closePrice: res[0].closePrice, price: res[0].price, pnl: res[0].pnl, roe: res[0].roe, amount: size, updateTimeStamp: res[0].updateTimeStamp, openDateTime: datetime(res[0].updateTimeStamp), closeDateTime: currentDatetime, status: 0, type: type, isCredit: 1 };
+                                        //             Orders_Details.insertOne(orderDetails, function (err, res) {
+                                        //             });
+                                        //         });
+                                        //     });
+
+                                        //     sendTelegramMaster(
+                                        //         `Error on ${type} ${size} of ${res[0].symbol} for ${listener_name}`
+                                        //     );http://139.99.74.143:3000/
+                                        //     console.log("Error in size increase of previous order" + JSON.stringify(err));
+                                        // })
+                                    }
+
+
+                                    // leaderboard size is greater than mongodb size and type Sell
+                                    if (lbsize < mgsize && type == "Sell") {
+
+                                        let size = final_quantity;
+                                        // futureTrade(alldata).then(response => {
+                                        var updateData = { symbol: mgsym };
+                                        // var updateData = { id: ObjectId(order_id) };
+                                        // var newValue = { $set: { amount: lbsize, status: 0, isCredit: 1, orderStatus: "success" ,lbamount:final_lbamount,lbentryPrice:data[i].entryPrice} };
+                                        var newValue = { $set: { amount: size, status: 0, isCredit: 1, orderStatus: "success", lbamount: final_lbamount, lbentryPrice: data[i].entryPrice, lbsize: lbsize } };
+                                        Orders.updateMany(updateData, newValue, function (err, res) {
+                                            Orders_Details.find({ orderId: ObjectId(order_id) }).toArray(function (req, res) {
+                                                console.log("ressssssssssssssssssssssssssssssssssssss " + JSON.stringify(res));
+                                                if (res[0].lbsize != lbsize) {
+                                                    var orderDetails = { orderId: res[0].orderId, symbol: res[0].symbol, closePrice: res[0].closePrice, price: res[0].price, pnl: res[0].pnl, roe: res[0].roe, amount: size, updateTimeStamp: res[0].updateTimeStamp, openDateTime: datetime(res[0].updateTimeStamp), closeDateTime: currentDatetime, status: 0, type: type, isCredit: 1, orderStatus: "success", lbamount: final_lbamount, lbentryPrice: data[i].entryPrice, lbsize: lbsize };
+                                                    Orders_Details.insertOne(orderDetails, function (err, res) {
+                                                    });
+                                                }
+                                            });
+                                        });
+                                        sendTelegramMaster(
+                                            `New order made: ${type} ${size} of ${res[0].symbol} for ${listener_name}`
+                                        );
+                                        // console.log("order placed size increase of previous order" + JSON.stringify(response));
+                                        // }).catch(err => {
+                                        //     var updateData = { symbol: mgsym };
+                                        //     var newValue = { $set: { amount: lbsize, status: 0, isCredit: 1, orderStatus: "failed" } };
+                                        //     Orders.updateMany(updateData, newValue, function (err, res) {
+
+                                        //         Orders_Details.find({ orderId: ObjectId(order_id) }).toArray(function (req, res) {
+                                        //             var orderDetails = { orderId: res[0].orderId, symbol: res[0].symbol, closePrice: res[0].closePrice, price: res[0].price, pnl: res[0].pnl, roe: res[0].roe, amount: size, updateTimeStamp: res[0].updateTimeStamp, openDateTime: datetime(res[0].updateTimeStamp), closeDateTime: currentDatetime, status: 0, type: type, isCredit: 1 };
+                                        //             Orders_Details.insertOne(orderDetails, function (err, res) {
+                                        //             });
+                                        //         });
+                                        //     });
+
+                                        //     sendTelegramMaster(
+                                        //         `Error on ${type} ${size} of ${res[0].symbol} for ${listener_name}`
+                                        //     );
+                                        //     console.log("Error in size increase of previous order" + JSON.stringify(err));
+                                        // })
+                                    }
+
+                                } else {
+                                    // Open order new code rr
+
+                                    // setLeverage(lbsymbol, leverage).then(res => {
+                                    //     console.log("all_data " + JSON.stringify(alldata));
+                                    //     futureTrade(alldata).then(response => {
+                                    //if trade succssfully placed then insert in mongo db
+                                    // if (response.symbol = data[i].symbol) {
+                                    var orderData = [{ encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: quantity, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1, orderStatus: "success", lbsize: data[i].amount }];
+                                    Orders.insertMany(orderData, function (err, res) {
                                         if (err) throw err;
 
-                                        // var Review = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1,review:" insert record open order with new symbol and new encrypted id in orders details table" };
-                                        // Reviews.insertOne(Review,function(err,res){});
-                                        // console.log("order details created");
+                                        var id = res.insertedIds[0];
+                                        var orderDetails = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: quantity, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1, orderStatus: "success" };
+                                        Orders_Details.insertOne(orderDetails, function (err, res) {
+                                            if (err) throw err;
+                                            sendTelegramMaster(
+                                                `New order made: ${type} ${quantity} of ${data[i].symbol} for ${listener_name}`
+                                            );
+                                        });
                                     });
-                                });
 
-                                console.log("order placed" + JSON.stringify(response));
-                            }
-                        }).catch(err => {
+                                    // console.log("order placed" + JSON.stringify(response));
+                                    // }
+                                    //     }).catch(err => {
 
-                            //error in order placed
+                                    //         //error in order placed
 
-                            var orderData = [{ encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: quantity, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1,orderStatus:"failed" }];
-                            Orders.insertMany(orderData, function (err, res) {
-                                if (err) throw err;
+                                    //         var orderData = [{ encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: quantity, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1, orderStatus: "failed" }];
+                                    //         Orders.insertMany(orderData, function (err, res) {
+                                    //             if (err) throw err;
 
-                                // var Review = { encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1,review:" insert record open order with new symbol and new encrypted id in orders table" };
-                                // Reviews.insertOne(Review,function(err,res){});
-                                // console.log("orders  created");
-                                var id = res.insertedIds[0];
-                                var orderDetails = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: quantity, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1,orderStatus:"failed"};
-                                Orders_Details.insertOne(orderDetails, function (err, res) {
-                                    if (err) throw err;
+                                    //             var id = res.insertedIds[0];
+                                    //             var orderDetails = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: quantity, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1, orderStatus: "failed" };
+                                    //             Orders_Details.insertOne(orderDetails, function (err, res) {
+                                    //                 if (err) throw err;
 
-                                    // var Review = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1,review:" insert record open order with new symbol and new encrypted id in orders details table" };
-                                    // Reviews.insertOne(Review,function(err,res){});
-                                    // console.log("order details created");
-                                });
+                                    //             });
+                                    //         });
+                                    //         sendTelegramMaster(
+                                    //             `Error on ${type} for ${listener_name} on ${data[i].symbol} for ${quantity}`
+                                    //         );
+
+                                    //         console.log("error while order place" + JSON.stringify(err));
+                                    //     });
+
+                                    // });
+                                }
+
                             });
 
-                            console.log("error while order place" + JSON.stringify(err));
-                        });
-                        // }).catch(err => {
-                        //     console.log("there are some errors" + JSON.stringify(err));
-                        // });
-
-
-
-                        // console.log(res.length);
-
-                    });
-                    }
+                        }
                     
-                });
 
-            }
-
-
-
-            //     if (mgsymbol != undefined && mguid != undefined) {
-
-            //         console.log(" (mgsymbol != undefined && mguid != undefined)");
-            //         let lbsize = data[i].amount;
-            //         let mgsize = mgsymbol.amount;
-            //         let mgsym = mgsymbol.symbol;
-            //         let order_id = mgsymbol._id;
-
-
-
-            //         if (lbsize > mgsize) {
-            //             console.log("mgsym" + mgsym);
-            //             console.log("lbsize > mgsize");
-            //             let size = lbsize - mgsize;
-            //             if (lbsize < 0) {
-            //                 size = lbsize - (mgsize);
-            //                 type = "Sell";
-            //             }
-
-            //             var updateData = { symbol: mgsym };
-            //             var newValue = { $set: { amount: lbsize, status: 0, isCredit: 1 } };
-            //             Orders.updateMany(updateData, newValue, function (err, res) {
-            //                 // var Review = { orderId: res[0].orderId, symbol: res[0].symbol, closePrice: res[0].entryPrice, price: res[0].markPrice, pnl: res[0].pnl, roe: res[0].roe, amount: size, openDateTime: datetime(res[0].updateTimeStamp), closeDateTime: currentDatetime, status: 0, type: type, isCredit: 1,review:"update record with larger lbsize in orders table" };
-            //                 //     Reviews.insertOne(Review,function(err,res){});
-
-            //                 Orders_Details.find({ orderId: ObjectId(order_id) }).toArray(function (req, res) {
-            //                     // for (let i in res) {
-
-            //                     Orders_Details.insertOne(orderDetails, function (err, res) {
-            //                         // console.log("order details updated with less size");
-            //                         var Review = { orderId: res[0].orderId, symbol: res[0].symbol, closePrice: res[0].entryPrice, price: res[0].markPrice, pnl: res[0].pnl, roe: res[0].roe, amount: size, openDateTime: datetime(res[0].updateTimeStamp), closeDateTime: currentDatetime, status: 0, type: type, isCredit: 1, review: " insert record with larger lbsize in orders details table" };
-            //                         Reviews.insertOne(Review, function (err, res) { });
-            //                     });
-            //                     // }
-            //                 });
-            //             });
-
-            //         }
-            //         else if (lbsize < mgsize) {
-            //             console.log("mgsym" + mgsym);
-            //             console.log("lbsize < mgsize");
-
-            //             let size = mgsize - lbsize;
-            //             if (lbsize < 0) {
-            //                 size = mgsize - (lbsize);
-            //                 type = "Sell";
-            //             }
-            //             console.log("lbsize" + lbsize);
-
-            //             var updateData = { symbol: mgsym };
-            //             var newValue = { $set: { amount: lbsize, status: 0, isCredit: 1 } };
-            //             Orders.updateMany(updateData, newValue, function (err, res) {
-            //                 // console.log("order updated with less size");
-
-            //                 // var Review = { orderId: res[0].orderId, symbol: res[0].symbol, closePrice: res[0].entryPrice, price: res[0].markPrice, pnl: res[0].pnl, roe: res[0].roe, amount: size, openDateTime: datetime(res[0].updateTimeStamp), closeDateTime: currentDatetime, status: 0, type: type, isCredit: 1,review:" update record with small lbsize in orders  table" };
-            //                 // Reviews.insertOne(Review,function(err,res){});
-
-            //                 Orders_Details.find({ orderId: ObjectId(order_id) }).toArray(function (req, res) {
-            //                     // for (let i in res) {
-            //                     var orderDetails = { orderId: res[0].orderId, symbol: res[0].symbol, closePrice: res[0].closePrice, price: res[0].price, pnl: res[0].pnl, roe: res[0].roe, amount: size, updateTimeStamp: res[0].updateTimeStamp, openDateTime: datetime(res[0].updateTimeStamp), closeDateTime: currentDatetime, status: 0, type: type, isCredit: 1 };
-
-            //                     Orders_Details.insertOne(orderDetails, function (err, res) {
-
-            //                         // var Review = { orderId: res[0].orderId, symbol: res[0].symbol, closePrice: res[0].entryPrice, price: res[0].markPrice, pnl: res[0].pnl, roe: res[0].roe, amount: size, openDateTime: datetime(res[0].updateTimeStamp), closeDateTime: currentDatetime, status: 0, type: type, isCredit: 1,review:" insert record with small lbsize in orders details table" };
-            //                         // Reviews.insertOne(Review,function(err,res){});
-            //                         // console.log("order details updated with less size");
-            //                     });
-            //                     // }
-            //                 });
-            //             });
-            //         }
-
-            //     } else if (mgsymbol == undefined && mguid == undefined) {
-            //         console.log("mgsymbol == undefined && mguid == undefined");
-
-            //         let alldata = {};
-
-            //         alldata.symbol = data[i].symbol;
-            //         alldata.quantity = 10;
-            //         if (data[i].amount < 0) {
-            //             alldata.type = "Sell";
-            //         }
-            //         else {
-            //             alldata.type = "Buy";
-            //         }
-
-
-            //         type = "Buy";
-
-            //         if (data[i].amount < 0) {
-            //             type = "Sell";
-            //         }
-
-            //         // //open order code
-            //         // Orders.find({ symbol: lbsymbol }).toArray(function (req, res) {
-            //         Orders.find({ $and: [{ symbol: lbsymbol }, { encryptedUid: listener_id }] }).toArray(function (req, res) {
-            //             if (res.length > 0) {
-            //             } else {
-
-            //                 // console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%Symbold not exist");
-            //                 setLeverage(lbsymbol, 20).then(res => {
-            //                     console.log("all_data " + JSON.stringify(alldata));
-            //                     futureTrade(alldata).then(data => {
-            //                         console.log("order placed" + JSON.stringify(data));
-            //                     }).catch(err => {
-            //                         console.log("error while order place" + JSON.stringify(err));
-            //                     })
-            //                 }).catch(err => {
-            //                     console.log("there are some errors" + JSON.stringify(err));
-            //                 });
-
-
-
-            //                 var orderData = [{ encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1 }];
-            //                 Orders.insertMany(orderData, function (err, res) {
-            //                     if (err) throw err;
-
-            //                     // var Review = { encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1,review:" insert record open order with new symbol and new encrypted id in orders table" };
-            //                     // Reviews.insertOne(Review,function(err,res){});
-            //                     // console.log("orders  created");
-            //                     var id = res.insertedIds[0];
-            //                     var orderDetails = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1 };
-            //                     Orders_Details.insertOne(orderDetails, function (err, res) {
-            //                         if (err) throw err;
-
-            //                         // var Review = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1,review:" insert record open order with new symbol and new encrypted id in orders details table" };
-            //                         // Reviews.insertOne(Review,function(err,res){});
-            //                         // console.log("order details created");
-            //                     });
-            //                 });
-            //             }
-
-            //             // console.log(res.length);
-            //         });
-
-            //     }
-
-            //     else if (mgsymbol == undefined && mguid != undefined) {
-            //         console.log("mgsymbol == undefined && mguid != undefined");
-            //         let alldata = {};
-
-            //         alldata.symbol = data[i].symbol;
-            //         alldata.quantity = 10;
-            //         if (data[i].amount < 0) {
-            //             alldata.type = "Sell";
-            //         }
-            //         else {
-            //             alldata.type = "Buy";
-            //         }
-
-
-            //         type = "Buy";
-            //         if (data[i].amount < 0) {
-            //             type = "Sell";
-            //         }
-
-            //         //open order code
-            //         Orders.find({ $and: [{ encryptedUid: { $ne: listener_id } }, { lbsymbol: lbsymbol }] }).toArray(function (req, res) {
-            //             if (res.length > 0) {
-            //             } else {
-            //                 setLeverage(lbsymbol, 10).then(res => {
-            //                     console.log("all_data " + JSON.stringify(alldata));
-            //                     futureTrade(alldata).then(data => {
-            //                         console.log("order placed" + JSON.stringify(data));
-            //                     }).catch(err => {
-            //                         console.log("error while order place" + JSON.stringify(err));
-            //                     })
-            //                 }).catch(err => {
-            //                     console.log("there are some errors" + JSON.stringify(err));
-            //                 });
-
-            //                 // console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%Symbold not exist");
-
-            //                 var orderData = [{ encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1 }];
-            //                 Orders.insertMany(orderData, function (err, res) {
-            //                     // var Review = { encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1,review:" insert record open order with new symbol in orders  table" };
-            //                     // Reviews.insertOne(Review,function(err,res){});
-            //                     if (err) throw err;
-            //                     // console.log("orders  created");
-            //                     var id = res.insertedIds[0];
-            //                     var orderDetails = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1 };
-            //                     Orders_Details.insertOne(orderDetails, function (err, res) {
-            //                         if (err) throw err;
-
-            //                         // var Review = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1,review:" insert record open order with new symbol in orders  details table" };
-            //                         // Reviews.insertOne(Review,function(err,res){});
-            //                         // console.log("order details created");
-            //                     });
-            //                 });
-            //             }
-
-            //             // console.log(res.length);
-            //         });
-
-            //     }
-            //     else if (mgsymbol != undefined && mguid == undefined) {
-            //         console.log("mgsymbol != undefined && mguid == undefined");
-            //         let alldata = {};
-
-            //         alldata.symbol = data[i].symbol;
-            //         alldata.quantity = 10;
-            //         if (data[i].amount < 0) {
-            //             alldata.type = "Sell";
-            //         }
-            //         else {
-            //             alldata.type = "Buy";
-            //         }
-
-
-
-            //         type = "Buy";
-            //         if (data[i].amount < 0) {
-            //             type = "Sell";
-            //         }
-
-            //         //open order code
-            //         Orders.find({ $and: [{ symbol: { $ne: lbsymbol } }, { encryptedUid: listener_id }] }).toArray(function (req, res) {
-            //             if (res.length > 0) {
-            //             } else {
-
-            //                 setLeverage(lbsymbol, 10).then(res => {
-            //                     console.log("all_data " + JSON.stringify(alldata));
-            //                     futureTrade(alldata).then(data => {
-            //                         console.log("order placed" + JSON.stringify(data));
-            //                     }).catch(err => {
-            //                         console.log("error while order place" + JSON.stringify(err));
-            //                     })
-            //                 }).catch(err => {
-            //                     console.log("there are some errors" + JSON.stringify(err));
-            //                 });
-
-            //                 // console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%Symbold not exist");
-
-            //                 var orderData = [{ encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1 }];
-            //                 Orders.insertMany(orderData, function (err, res) {
-            //                     if (err) throw err;
-
-            //                     // var Review = { encryptedUid: listener_id, symbol: data[i].symbol, startPrice: data[i].entryPrice, endPrice: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, profitType: "", PlAmount: "", isCredit: 1,review:" insert record open order with new encypted id in orders  table" };
-            //                     // Reviews.insertOne(Review,function(err,res){});
-            //                     // console.log("orders  created");
-            //                     var id = res.insertedIds[0];
-            //                     var orderDetails = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1 };
-            //                     Orders_Details.insertOne(orderDetails, function (err, res) {
-            //                         if (err) throw err;
-            //                         // var Review = { orderId: id, symbol: data[i].symbol, closePrice: data[i].entryPrice, price: data[i].markPrice, pnl: data[i].pnl, roe: data[i].roe, amount: data[i].amount, updateTimeStamp: data[i].updateTimeStamp, openDateTime: datetime(data[i].updateTimeStamp), closeDateTime: currentDatetime, status: status, type: type, isCredit: 1,review:" insert record open order with new encrypted id in orders  details table" };
-            //                         // Reviews.insertOne(Review,function(err,res){});
-            //                         // console.log("order details created");
-            //                     });
-            //                 });
-            //             }
-
-            //             // console.log(res.length);
-            //         });
-
-            //     }
-            // }
+                }
 
 
             //close order code
             Orders.find({ status: 0 }).toArray(function (req, res) {
-
+                console.log("order close code *******************");
                 for (let i in res) {
                     let order_symbol = res[i].symbol;
                     let order_id = res[i]._id;
-                    
+
                     let encryptedUid = res[i].encryptedUid;
+
+                    let lbsymbol = data[i].symbol;
+
                     if (!lbsymbols.includes(order_symbol) && encryptedUid == listener_id) {
-                        closeTrade(order_symbol).then(response => {
-                            
-                            //order update if order successfully placed with binance
-                            
-                            if (response.symbol == order_symbol) {
-                                console.log("sssssssresult symbolsssssss"+order_symbol);
-                                var updateData = { symbol: order_symbol };
-                                var newValue = { $set: { status: 1, isCredit: 0 ,orderStatus:"success"} };
-                                Orders.updateMany(updateData, newValue, function (err, res) {
+                        // closeTrade(order_symbol).then(response => {
 
-                                    // var Review = { orderId: data[0].orderId, symbol: data[0].symbol, closePrice: data[0].closePrice, price: data[0].price, pnl: data[0].pnl, roe: data[0].roe, amount: data[0].amount, updateTimeStamp: data[0].updateTimeStamp, openDateTime: datetime(data[0].updateTimeStamp), closeDateTime: currentDatetime, status: 1, type: data[0].type, isCredit: 0,review:" insert record close order in orders  table" };
-                                    // Reviews.insertOne(Review,function(err,res){});
-                                    // console.log("order closed");
-                                    // console.log("order_id"+ObjectId(order_id));
-                                    // Orders_Details.find({ orderId: id }).toArray(function (req, res) {
-                                    Orders_Details.find({ $and: [{ orderId: ObjectId(order_id) }, { symbol: order_symbol }] }).toArray(function (req, data) {
-                                        if (data.length == 1) {
+                        //order update if order successfully placed with binance
 
-                                            // console.log("find res"+JSON.stringify(data.length));
-                                            // for (let i in data) {
-                                            var orderDetails = { orderId: data[0].orderId, symbol: data[0].symbol, closePrice: data[0].closePrice, price: data[0].price, pnl: data[0].pnl, roe: data[0].roe, amount: data[0].amount, updateTimeStamp: data[0].updateTimeStamp, openDateTime: datetime(data[0].updateTimeStamp), closeDateTime: currentDatetime, status: 1, type: data[0].type, isCredit: 0,orderStatus:"success" };
-                                            Orders_Details.insertOne(orderDetails, function (err, res) {
+                        // if (response.symbol == order_symbol) {
+                        console.log("sssssssresult symbolsssssss" + order_symbol);
+                        // var updateData = { symbol: order_symbol };
+                        var updateData = { _id: ObjectId(order_id) };
+                        var newValue = { $set: { status: 1, isCredit: 0, orderStatus: "success" } };
+                        Orders.updateMany(updateData, newValue, function (err, res) {
 
-                                                // var Review = { orderId: data[0].orderId, symbol: data[0].symbol, closePrice: data[0].closePrice, price: data[0].price, pnl: data[0].pnl, roe: data[0].roe, amount: data[0].amount, updateTimeStamp: data[0].updateTimeStamp, openDateTime: datetime(data[0].updateTimeStamp), closeDateTime: currentDatetime, status: 1, type: data[0].type, isCredit: 0,review:" insert record close order in orders details table" };
-                                                // Reviews.insertOne(Review,function(err,res){});
-                                                // console.log("order details closed");
-                                            });
-                                            // }
-                                        }
-                                    });
+                            Orders_Details.find({ $and: [{ orderId: ObjectId(order_id) }, { symbol: order_symbol }] }).toArray(function (req, data) {
+                                var orderDetails = { orderId: data[0].orderId, symbol: data[0].symbol, closePrice: data[0].closePrice, price: data[0].price, pnl: data[0].pnl, roe: data[0].roe, amount: data[0].amount, updateTimeStamp: data[0].updateTimeStamp, openDateTime: datetime(data[0].updateTimeStamp), closeDateTime: currentDatetime, status: 1, type: data[0].type, isCredit: 0, orderStatus: "success" };
+                                Orders_Details.insertOne(orderDetails, function (err, res) {
 
+                                    sendTelegramMaster(
+                                        `New order made: ${data[0].type} ${data[0].amount} of ${data[0].symbol} for ${listener_name}`
+                                    );
                                 });
-
-                                console.log("close order " + response);
-                            }
-                        }).catch(err => {
-                            var updateData = { symbol: order_symbol };
-                            var newValue = { $set: { status: 1, isCredit: 0,orderStatus:"failed" } };
-                            Orders.updateMany(updateData, newValue, function (err, res) {
-
-                                // var Review = { orderId: data[0].orderId, symbol: data[0].symbol, closePrice: data[0].closePrice, price: data[0].price, pnl: data[0].pnl, roe: data[0].roe, amount: data[0].amount, updateTimeStamp: data[0].updateTimeStamp, openDateTime: datetime(data[0].updateTimeStamp), closeDateTime: currentDatetime, status: 1, type: data[0].type, isCredit: 0,review:" insert record close order in orders  table" };
-                                // Reviews.insertOne(Review,function(err,res){});
-                                // console.log("order closed");
-                                // console.log("order_id"+ObjectId(order_id));
-                                // Orders_Details.find({ orderId: id }).toArray(function (req, res) {
-                                Orders_Details.find({ $and: [{ orderId: ObjectId(order_id) }, { symbol: order_symbol }] }).toArray(function (req, data) {
-                                    if (data.length == 1) {
-
-                                        // console.log("find res"+JSON.stringify(data.length));
-                                        // for (let i in data) {
-                                        var orderDetails = { orderId: data[0].orderId, symbol: data[0].symbol, closePrice: data[0].closePrice, price: data[0].price, pnl: data[0].pnl, roe: data[0].roe, amount: data[0].amount, updateTimeStamp: data[0].updateTimeStamp, openDateTime: datetime(data[0].updateTimeStamp), closeDateTime: currentDatetime, status: 1, type: data[0].type, isCredit: 0 , orderStatus:"failed"};
-                                        Orders_Details.insertOne(orderDetails, function (err, res) {
-
-                                            // var Review = { orderId: data[0].orderId, symbol: data[0].symbol, closePrice: data[0].closePrice, price: data[0].price, pnl: data[0].pnl, roe: data[0].roe, amount: data[0].amount, updateTimeStamp: data[0].updateTimeStamp, openDateTime: datetime(data[0].updateTimeStamp), closeDateTime: currentDatetime, status: 1, type: data[0].type, isCredit: 0,review:" insert record close order in orders details table" };
-                                            // Reviews.insertOne(Review,function(err,res){});
-                                            // console.log("order details closed");
-                                        });
-                                        // }
-                                    }
-                                });
-
+                                // }
+                                // }
                             });
 
-                            console.log("close order err " + err);
                         });
 
+                        // console.log("close order " + response);
+                        // }
+                        // }).catch(err => {
+                        //     var updateData = { symbol: order_symbol };
+                        //     var newValue = { $set: { status: 1, isCredit: 0, orderStatus: "failed" } };
+                        //     Orders.updateMany(updateData, newValue, function (err, res) {
 
+                        //         Orders_Details.find({ $and: [{ orderId: ObjectId(order_id) }, { symbol: order_symbol }] }).toArray(function (req, data) {
+                        //             var orderDetails = { orderId: data[0].orderId, symbol: data[0].symbol, closePrice: data[0].closePrice, price: data[0].price, pnl: data[0].pnl, roe: data[0].roe, amount: data[0].amount, updateTimeStamp: data[0].updateTimeStamp, openDateTime: datetime(data[0].updateTimeStamp), closeDateTime: currentDatetime, status: 1, type: data[0].type, isCredit: 0, orderStatus: "failed" };
+                        //             Orders_Details.insertOne(orderDetails, function (err, res) {
+                        //             });
+                        //             sendTelegramMaster(
+                        //                 `Error on ${data[0].type} for ${listener_name} on ${data[0].symbol} for ${data[0].type}`
+                        //             );
+                        //         });
 
-                        // console.log("symbol data not exist");
+                        //     });
+
+                        //     console.log("close order err " + err);
+                        // });
+
                     }
                     else {
-                        // console.log(order_symbol);
-                        // console.log("symbol data  exist");
                     }
                 }
 
-
-                // console.log("active records");
-                // console.log(res);
             });
 
         }
 
+        });
 
-    }
-});
-        
     });
 })();
 

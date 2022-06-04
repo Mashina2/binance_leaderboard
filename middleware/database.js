@@ -15,8 +15,7 @@ async function database(req, res, next) {
   // console.log(client)
   await client.connect();
   req.dbClient = client;
-  // req.db = client.db("GRIFFIN");
-  req.db = client.db("binance_leaderboard");
+  req.db = client.db("GRIFFIN");
   return next();
 }
 

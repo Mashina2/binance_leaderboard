@@ -8,7 +8,7 @@ await req.db.collection('leaderboard_uid').find({}).toArray(function(err, rest){
   for(let i in rest){
     if(rest[i].isPrimary == true) encryptedUid=rest[i].encryptedUid;
   }
-  req.db.collection('orders').find({encryptedUid:encryptedUid}).toArray(function(err, result){
+  req.db.collection('orders').find({$and:[{encryptedUid:encryptedUid},{status:0}]}).toArray(function(err, result){
     if(err) throw err;
     let data = {};
     let uid = {};

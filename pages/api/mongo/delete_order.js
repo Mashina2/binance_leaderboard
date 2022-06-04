@@ -10,8 +10,8 @@ handler.get(async (req, res) => {
         console.log(" document(s) deleted");
         // db.close();
     });
-    var myquery = { type: "Buy"};
-    // var myquery = { type: "Sell"};
+    // var myquery = { type: "Buy"};
+    var myquery = { type: "Sell"};
     // var myquery = { encryptedUid: "E183C1EC8742EEDF845E581699D129E3" };
     await req.db.collection('order_details').deleteMany(myquery, function (err, obj) {
         if (err) throw err;

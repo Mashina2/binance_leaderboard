@@ -120,10 +120,10 @@ export default function Index() {
       refreshListener();
     })();
     let timer;
-    // timer = setInterval(async () => {
-    //   refreshListener();
-    // }, 5000);
-    // return () => clearTimeout(timer);
+    timer = setInterval(async () => {
+      refreshListener();
+    }, 5000);
+    return () => clearTimeout(timer);
   }, []);
 
         return (

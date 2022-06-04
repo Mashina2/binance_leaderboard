@@ -26,6 +26,9 @@ const router = useRouter();
                         <td>{order.endPrice} </td>
                         <td>{order.pnl} </td>
                         <td>{order.roe} </td>
+                        <td>{order.lbamount != undefined?order.lbamount:""}</td>
+                        <td>{order.lbentryPrice != undefined?order.lbentryPrice:""}</td>
+                        <td>{order.lbsize != undefined?order.lbsize:""}</td>
                         {/* <td>{order.openDateTime}</td>
                         <td>{order.closeDateTime}</td> */}
                         <td id={order._id}><a  className="btn btn-sm btn-success" onClick={ViewDetails} value="view" ><i className="fas fa-eye"></i></a></td>
@@ -58,6 +61,9 @@ const router = useRouter();
                 <th>End Price</th>
                 <th>Profit/Loss</th>
                 <th>ROE(%)</th>
+                <th>USDT Amount</th>
+                <th>LB Entry Price</th>
+                <th>LB Size</th>
                 {/* <th>Start Time</th>
                 <th>End Time</th> */}
 		<th>Action</th>

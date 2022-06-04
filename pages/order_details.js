@@ -4,6 +4,7 @@ import {useRouter} from "next/router";
 export default function OrderDetails(props) {
     const { query } = useRouter();
     let order_id = query.order_id;
+    let closeOrder_id = query.closeOrder_id;
     let [getOrders, setOrders] = useState();
     useEffect(() => {
         (async () => {
@@ -18,6 +19,9 @@ export default function OrderDetails(props) {
             let arr = [];
             for (let i in orders) {
                 let order = orders[i];
+                // if(closeOrder_id == undefined){
+
+                
             // if(order.status == 0){
                 let tableClass = order.status == 0 ? 'table-success':"table-danger";
                 arr.push(
