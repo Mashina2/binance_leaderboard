@@ -56,7 +56,7 @@ export default function OpenOrders() {
             setOrders(arr);
        })();
     
-    });
+    });``
 
     return (
         <div className="container">

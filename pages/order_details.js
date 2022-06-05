@@ -36,6 +36,9 @@ export default function OrderDetails(props) {
                         <td>{order.closePrice} </td>
                         <td>{order.pnl} </td>
                         <td>{order.roe} </td>
+                        <td>{order.lbamount != undefined?order.lbamount:""}</td>
+                        <td>{order.lbentryPrice != undefined?order.lbentryPrice:""}</td>
+                        <td>{order.lbsize != undefined?order.lbsize:""}</td>
                         <td>{order.isCredit==1?'Credit':"Debit"} </td>
                         <td>{order.status==1?'Close Order':"Open Order"} </td>
                         <td>{order.openDateTime}</td>
@@ -70,6 +73,9 @@ export default function OrderDetails(props) {
                 <th>Close Price</th>
                 <th>Profit/Loss</th>
                 <th>ROE(%)</th>
+                <th>USDT Amount</th>
+                <th>LB Entry Price</th>
+                <th>LB Size</th>
                 <th>Transaction Type</th>
                 <th>Order Status</th>
                 <th>Order Time</th>
